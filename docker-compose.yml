@@ -1,0 +1,32 @@
+version: "3.9"
+
+services:
+
+  proxy:
+    image: nginx:latest
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - ${NGINX_CONFIG_DIR}:${MAPPED_NGINX_CONFIG_DIR}:rw
+      - ${PROJECT_SSL_CERTIFICATE}:${PROJECT_MAPPED_SSL_CERTIFICATE}:rw
+      - ${PROJECT_SSL_KEY}:${PROJECT_MAPPED_SSL_KEY}:rw
+      - ${PROJECT_DIR}:${MAPPED_PROJECT_DIR}:rw
+    restart: unless-stopped
+
+  php:
+    build:
+      context: .
+    volumes:
+        - ${PROJECT_DIR}:${MAPPED_PROJECT_DIR}:rw
+    restart: unless-stopped
+
+  mysql:
+    image: mysql:8.0
+    ports:
+      - "${MYSQL_EXTERNAL_PORT}:3306"
+    volumes:
+      - ${MYSQL_VOLUME_BASE_DIR}:/var/lib/mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD}
