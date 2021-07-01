@@ -11,21 +11,33 @@ class UserFixtures extends Fixture
 {
     private $passwordHasher;
 
+    private static array $roles = ["ROLE_USER"];
+    private static array $emails = [
+        "test@test.com",
+        "user@test.com",
+        "david@tobon.com"
+    ];
+
     public function __construct(UserPasswordHasherInterface $passwordHasher)
     {
         $this->passwordHasher = $passwordHasher;
     }
+
     public function load(ObjectManager $manager)
     {
-        // TODO set other user attributes
-        $user = new User();
+        foreach (self::$emails as $email) {
+            $user = new User();
+            $user->setEmail($email);
+            $user->setRoles(self::$roles);
 
-        $user->setPassword($this->passwordHasher->hashPassword(
-            $user,
-            'the_new_password'
-        ));
+            $user->setPassword($this->passwordHasher->hashPassword(
+                $user,
+                'secret'
+            ));
 
-        $manager->persist($user);
+            $manager->persist($user);
+        }
+
         $manager->flush();
     }
 }
