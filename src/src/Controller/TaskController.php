@@ -7,8 +7,8 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use App\Entity\Task;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Serializer\SerializerInterface;
 
 /**
  * @Route("/api/task")
@@ -16,50 +16,176 @@ use Symfony\Component\HttpFoundation\Request;
 class TaskController extends AbstractController
 {
     private TaskRepository $repository;
+    private SerializerInterface $serializer;
 
-    public function __construct(TaskRepository $taskRepository)
-    {
+    public function __construct(
+        TaskRepository $taskRepository,
+        SerializerInterface $serializer
+    ) {
         $this->repository = $taskRepository;
+        $this->serializer = $serializer;
     }
 
     /**
-     * @Route("/", name="tasks")
+     * @Route("/", name="tasks", methods={"GET"})
      */
     public function tasks(): JsonResponse
     {
-        $tasks = $this->repository->findAll();
+        $response = null;
 
-        $data = [];
-        foreach ($tasks as $task) {
-            $data[] = [
-                'title' => $task->getTitle(),
-                'description' => $task->getDescription(),
-                'type' => $task->getType(),
-                'priority' => $task->getPriority(),
-                'assignee' => $task->getAssignee(),
-                'status' => $task->getStatus(),
-            ];
+        try {
+            $tasks = $this->repository->findAll();
+
+            $response = new JsonResponse(
+                $this->serializer->serialize($tasks, 'json'),
+                Response::HTTP_OK,
+                [],
+                true
+            );
+        } catch (\Throwable $th) {
+            $response = new JsonResponse(
+                $th->getMessage(),
+                Response::HTTP_INTERNAL_SERVER_ERROR
+            );
         }
 
-        return new JsonResponse($data, Response::HTTP_OK);
+        return $response;
     }
 
     /**
-     * @Route("/create", name="create_task")
+     * @Route("/mytasks", name="my_tasks", methods={"GET"})
+     */
+    public function myTasks(): JsonResponse
+    {
+        $response = null;
+
+        try {
+            $email = $this->getUser()->getUsername();
+            $tasks = $this->repository->getUserTasks($email);
+
+            $response = new JsonResponse(
+                $this->serializer->serialize($tasks, 'json'),
+                Response::HTTP_OK,
+                [],
+                true
+            );
+        } catch (\Throwable $th) {
+            $response = new JsonResponse(
+                $th->getMessage(),
+                Response::HTTP_INTERNAL_SERVER_ERROR
+            );
+        }
+
+        return $response;
+    }
+
+    /**
+     * @Route("/detail/{id}", name="task_detail", methods={"GET"})
+     */
+    public function detail($id): JsonResponse
+    {
+        $response = null;
+
+        try {
+            $task = $this->repository->find($id);
+
+            $response = new JsonResponse(
+                $this->serializer->serialize($task, 'json'),
+                Response::HTTP_OK,
+                [],
+                true
+            );
+        } catch (\Throwable $th) {
+            $response = new JsonResponse(
+                $th->getMessage(),
+                Response::HTTP_INTERNAL_SERVER_ERROR
+            );
+        }
+
+        return $response;
+    }
+
+    /**
+     * @Route("/create", name="create_task", methods={"POST"})
      */
     public function create(Request $request): JsonResponse
     {
-        $task = new Task();
+        $response = null;
 
-        $data = json_decode($request->getContent(), true);
+        try {
+            $data = json_decode($request->getContent(), true);
 
-        $task->setTitle($data['title']);
-        $task->setDescription($data['description']);
-        $task->setType($data['type']);
-        $task->setPriority($data['priority']);
-        $task->setAssignee($data['assignee']);
-        $task->setStatus($data['status']);
+            $task = $this->repository->createTask($data);
 
-        return new JsonResponse(json_encode($task), Response::HTTP_OK);
+            $response = new JsonResponse(
+                $this->serializer->serialize($task, 'json'),
+                Response::HTTP_CREATED,
+                [],
+                true
+            );
+        } catch (\Throwable $th) {
+            $response = new JsonResponse(
+                $th->getMessage(),
+                Response::HTTP_INTERNAL_SERVER_ERROR
+            );
+        }
+
+        return $response;
+    }
+
+    /**
+     * @Route("/update", name="update_task", methods={"PUT"})
+     */
+    public function update(Request $request): JsonResponse
+    {
+        $response = null;
+
+        try {
+            $data = json_decode($request->getContent(), true);
+
+            $task = $this->repository->updateTask($data);
+
+            $response = new JsonResponse(
+                $this->serializer->serialize($task, 'json'),
+                Response::HTTP_CREATED,
+                [],
+                true
+            );
+        } catch (\Throwable $th) {
+            $response = new JsonResponse(
+                $th->getMessage(),
+                Response::HTTP_INTERNAL_SERVER_ERROR
+            );
+        }
+
+        return $response;
+    }
+
+    /**
+     * @Route("/delete", name="delete_task", methods={"DELETE"})
+     */
+    public function delete(Request $request): JsonResponse
+    {
+        $response = null;
+
+        try {
+            $data = json_decode($request->getContent(), true);
+
+            $task = $this->repository->deleteTask($data['id']);
+
+            $response = new JsonResponse(
+                $this->serializer->serialize($task, 'json'),
+                Response::HTTP_OK,
+                [],
+                true
+            );
+        } catch (\Throwable $th) {
+            $response = new JsonResponse(
+                $th->getMessage(),
+                Response::HTTP_INTERNAL_SERVER_ERROR
+            );
+        }
+
+        return $response;
     }
 }

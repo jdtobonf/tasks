@@ -1,5 +1,2 @@
-# index:
-#    path: /
-#    controller: App\Controller\TaskController::index
 api_login:
     path: /api/login
