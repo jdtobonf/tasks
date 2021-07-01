@@ -9,6 +9,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Serializer\SerializerInterface;
+use Psr\Log\LoggerInterface;
 
 /**
  * @Route("/api/task")
@@ -17,13 +18,16 @@ class TaskController extends AbstractController
 {
     private TaskRepository $repository;
     private SerializerInterface $serializer;
+    private LoggerInterface $logger;
 
     public function __construct(
         TaskRepository $taskRepository,
-        SerializerInterface $serializer
+        SerializerInterface $serializer,
+        LoggerInterface $logger
     ) {
         $this->repository = $taskRepository;
         $this->serializer = $serializer;
+        $this->logger = $logger;
     }
 
     /**
@@ -42,6 +46,8 @@ class TaskController extends AbstractController
                 [],
                 true
             );
+
+            $this->logActions('tasks');
         } catch (\Throwable $th) {
             $response = new JsonResponse(
                 $th->getMessage(),
@@ -69,6 +75,8 @@ class TaskController extends AbstractController
                 [],
                 true
             );
+
+            $this->logActions('my_tasks');
         } catch (\Throwable $th) {
             $response = new JsonResponse(
                 $th->getMessage(),
@@ -95,6 +103,8 @@ class TaskController extends AbstractController
                 [],
                 true
             );
+
+            $this->logActions('task_detail', $id);
         } catch (\Throwable $th) {
             $response = new JsonResponse(
                 $th->getMessage(),
@@ -123,6 +133,8 @@ class TaskController extends AbstractController
                 [],
                 true
             );
+
+            $this->logActions('create_task');
         } catch (\Throwable $th) {
             $response = new JsonResponse(
                 $th->getMessage(),
@@ -151,6 +163,8 @@ class TaskController extends AbstractController
                 [],
                 true
             );
+
+            $this->logActions('update_task', $data['id']);
         } catch (\Throwable $th) {
             $response = new JsonResponse(
                 $th->getMessage(),
@@ -179,6 +193,8 @@ class TaskController extends AbstractController
                 [],
                 true
             );
+
+            $this->logActions('delete_task', $data['id']);
         } catch (\Throwable $th) {
             $response = new JsonResponse(
                 $th->getMessage(),
@@ -187,5 +203,26 @@ class TaskController extends AbstractController
         }
 
         return $response;
+    }
+
+    /**
+     * Logs the actions requested by the user
+     *
+     * @param string $action Controller action called
+     * @param integer $id Id of the task (optional)
+     *
+     * @return void
+     */
+    private function logActions(string $action, int $id = 0): void
+    {
+        $user = $this->getUser()->getUsername();
+
+        $message = self::class . ": $user requested action $action";
+
+        if (!empty($id)) {
+            $message .= " on entity id $id";
+        }
+
+        $this->logger->info($message);
     }
 }
