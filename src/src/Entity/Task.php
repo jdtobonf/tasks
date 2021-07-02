@@ -1,16 +1,25 @@
 <?php
 
+/**
+ * Task Entity Class
+ */
+
 namespace App\Entity;
 
 use App\Repository\TaskRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
+ * @package App\Entity
+ * @author David Tobon <jdtobonf@gmail.com>
+ *
  * @ORM\Entity(repositoryClass=TaskRepository::class)
  */
 class Task
 {
     /**
+     * @var integer $id Database id
+     *
      * @ORM\Id
      * @ORM\GeneratedValue
      * @ORM\Column(type="integer")
@@ -18,31 +27,43 @@ class Task
     private $id;
 
     /**
+     * @var string $title Task title
+     *
      * @ORM\Column(type="string", length=255)
      */
     private $title;
 
     /**
+     * @var string $description Task description
+     *
      * @ORM\Column(type="string", length=255, nullable=true)
      */
     private $description;
 
     /**
+     * @var string $type Task type
+     *
      * @ORM\Column(type="string", length=255)
      */
     private $type;
 
     /**
+     * @var integer $priority Task priority
+     *
      * @ORM\Column(type="integer")
      */
     private $priority;
 
     /**
+     * @var string $assignee Task assignee
+     *
      * @ORM\Column(type="string", length=255)
      */
     private $assignee;
 
     /**
+     * @var string $status Task status
+     *
      * @ORM\Column(type="string", length=255)
      */
     private $status;

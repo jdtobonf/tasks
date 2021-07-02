@@ -8,7 +8,6 @@ namespace App\Repository;
 
 use App\Entity\Task;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
-use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -24,25 +23,15 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 class TaskRepository extends ServiceEntityRepository
 {
     /**
-     * @var EntityManagerInterface $manager
-     * Manager that performs operations in the database
-     */
-    private EntityManagerInterface $manager;
-
-    /**
      * Class constructor
      *
      * @param ManagerRegistry $registry Manager registry
      *
-     * @param EntityManagerInterface $entityManager Manager to perform operations in DB
-     *
      */
     public function __construct(
-        ManagerRegistry $registry,
-        EntityManagerInterface $entityManager
+        ManagerRegistry $registry
     ) {
         parent::__construct($registry, Task::class);
-        $this->manager = $entityManager;
     }
 
     /**
@@ -70,16 +59,10 @@ class TaskRepository extends ServiceEntityRepository
     {
         $task = new Task();
 
-        // TODO validations
-        $task->setTitle($data['title']);
-        $task->setDescription($data['description']);
-        $task->setType($data['type']);
-        $task->setPriority($data['priority']);
-        $task->setAssignee($data['assignee']);
-        $task->setStatus($data['status']);
+        $this->assignTaskData($task, $data);
 
-        $this->manager->persist($task);
-        $this->manager->flush();
+        $this->_em->persist($task);
+        $this->_em->flush();
 
         return $task;
     }
@@ -99,16 +82,10 @@ class TaskRepository extends ServiceEntityRepository
             throw new NotFoundHttpException("Task ${data['id']} was not found");
         }
 
-        // TODO validations
-        $task->setTitle($data['title']);
-        $task->setDescription($data['description']);
-        $task->setType($data['type']);
-        $task->setPriority($data['priority']);
-        $task->setAssignee($data['assignee']);
-        $task->setStatus($data['status']);
+        $this->assignTaskData($task, $data);
 
-        $this->manager->persist($task);
-        $this->manager->flush();
+        $this->_em->persist($task);
+        $this->_em->flush();
 
         return $task;
     }
@@ -128,9 +105,39 @@ class TaskRepository extends ServiceEntityRepository
             throw new NotFoundHttpException("Task $id was not found");
         }
 
-        $this->manager->remove($task);
-        $this->manager->flush();
+        $this->_em->remove($task);
+        $this->_em->flush();
 
         return $task;
+    }
+
+    /**
+     * Sets the attributes of a task
+     *
+     * @param Task  $task The task that will be modified
+     * @param array $data The data containing the task attributes
+     *
+     * @return void
+     */
+    private function assignTaskData(Task &$task, array $data): void
+    {
+        if (isset($data['title'])) {
+            $task->setTitle($data['title']);
+        }
+        if (isset($data['description'])) {
+            $task->setDescription($data['description']);
+        }
+        if (isset($data['type'])) {
+            $task->setType($data['type']);
+        }
+        if (isset($data['priority'])) {
+            $task->setPriority($data['priority']);
+        }
+        if (isset($data['assignee'])) {
+            $task->setAssignee($data['assignee']);
+        }
+        if (isset($data['status'])) {
+            $task->setStatus($data['status']);
+        }
     }
 }
