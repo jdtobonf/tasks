@@ -281,6 +281,10 @@ class TaskController extends AbstractController
     private function getValidationConstraints(): Assert\Collection
     {
         return new Assert\Collection([
+            'id' => new Assert\Optional([
+                new Assert\NotBlank(),
+                new Assert\Type(['type' => 'integer']),
+            ]),
             'title' => [
                 new Assert\NotBlank(),
                 new Assert\Type(['type' => 'string']),
